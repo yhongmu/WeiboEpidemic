@@ -27,7 +27,7 @@ type logger struct {
 }
 
 func (l *logger) Init(name string) {
-	file := "./log/file/" + time.Now().Format("2006-01-02_15:04:05") + "_" + name + "_log" + ".txt"
+	file := "./log/file/" + time.Now().Format("2006-01-02_15:04") + "_" + name + "_log" + ".txt"
 	logFile, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0766)
 	if err != nil {
 		panic(err)

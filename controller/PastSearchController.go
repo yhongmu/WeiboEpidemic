@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"runtime/debug"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -64,6 +65,7 @@ func (t *pastSearchController) getPastSearchDB(w http.ResponseWriter, r *http.Re
 	if err != nil {
 		network.ErrorShow(w, err)
 	} else {
+		sort.Sort(entity.HotSearchList(hotSearchList))
 		network.ResultOK(w, 0, "输入时间段的热搜时间查询成功！", hotSearchList)
 	}
 }
@@ -75,8 +77,10 @@ func (t *pastSearchController) pastSearchCrawler(w http.ResponseWriter, r *http.
 		network.ResultFail(w, -102, network.ErrorCode[-102])
 		return
 	}
+	startTime := r.PostFormValue("start_time")
+	endTime := r.PostFormValue("end_time")
 	t1 := time.Now()
-	hotSearchList, err := t.crawlerRequest()
+	hotSearchList, err := t.crawlerRequest(startTime, endTime)
 	if err != nil {
 		network.ErrorShow(w, err)
 		return
@@ -91,8 +95,8 @@ func (t *pastSearchController) pastSearchCrawler(w http.ResponseWriter, r *http.
 	network.ResultOK(w, 0, message, hotSearchList)
 }
 
-func (t *pastSearchController) crawlerRequest() ([]entity.HotSearchEntity, error) {
-	jsonMap, err := t.goRequestHotSearch()
+func (t *pastSearchController) crawlerRequest(startTime, endTime string) ([]entity.HotSearchEntity, error) {
+	jsonMap, err := t.goRequestHotSearch(startTime, endTime)
 	if err != nil {
 		return nil, err
 	}
@@ -107,9 +111,9 @@ func (t *pastSearchController) crawlerRequest() ([]entity.HotSearchEntity, error
  * 并发爬取多个日期的微博热搜数据
  *
  */
-func (t *pastSearchController) goRequestHotSearch() (map[string]string, error) {
+func (t *pastSearchController) goRequestHotSearch(startTime, endTime string) (map[string]string, error) {
 	// 获取新冠疫情开始日期到现在的前一天之间的日期列表
-	dateList := utils.GetBetweenDates()
+	dateList := utils.GetBetweenDates(startTime, endTime)
 	jsonMap := make(map[string]string)
 	header := make(map[string]string)
 	header["Origin"] = "http://weibo.zhaoyizhe.com"
