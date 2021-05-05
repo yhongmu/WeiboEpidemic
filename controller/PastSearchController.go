@@ -192,7 +192,7 @@ func (t *pastSearchController) goFilterSearchMain(dateStr string, datas []entity
 				log.GetLog().Error.Println(
 					fmt.Sprintf(
 						"date=%s，topic=%s，爬取微博正文内容报错，error=%s", dateStr, hotSearchData.Topic, err))
-				return
+				htmlStr = "正在检测访问环境"
 			}
 			mutex.Lock()
 			{
