@@ -85,11 +85,11 @@ func (t *pastSearchController) pastSearchCrawler(w http.ResponseWriter, r *http.
 		network.ErrorShow(w, err)
 		return
 	}
-	err = dao.GetPastDao().InsertAllPastHotSearch(hotSearchList)
-	if err != nil {
-		network.ErrorShow(w, err)
-		return
-	}
+	//err = dao.GetPastDao().InsertAllPastHotSearch(hotSearchList)
+	//if err != nil {
+	//	network.ErrorShow(w, err)
+	//	return
+	//}
 	elapsed := time.Since(t1)
 	message := fmt.Sprintf("指定日期的新冠肺炎相关热搜成功存入数据库！耗时 %.2fs", float64(elapsed)/1e9)
 	network.ResultOK(w, 0, message, hotSearchList)
@@ -167,6 +167,8 @@ func (t *pastSearchController) goFilterSearch(jsonMap map[string]string) ([]enti
 		}
 		flag = true
 		list := t.goFilterSearchMain(date, jsonDec.Data)
+		log.GetLog().Info.Println(fmt.Sprintf("开始插入date=%s 的热搜数据;", date))
+		err = dao.GetPastDao().InsertAllPastHotSearch(list)
 		hotSearchList = append(hotSearchList, list...)
 	}
 	if hotSearchList != nil {
