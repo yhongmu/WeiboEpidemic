@@ -161,8 +161,8 @@ func (t *pastSearchController) goFilterSearch(jsonMap map[string]string) ([]enti
 	for date, jsonStr := range jsonMap {
 		var jsonDec entity.JsonDecEntity
 		err := json.Unmarshal([]byte(jsonStr), &jsonDec)
-		if err != nil || jsonDec.Code != 1 {
-			println(fmt.Sprintf("date: %s 出现json数据错误！", date))
+		if err != nil || jsonDec.Code != 1 || len(jsonDec.Data) == 0 {
+			log.GetLog().Error.Println(fmt.Sprintf("date: %s 出现json数据错误！", date))
 			continue
 		}
 		flag = true
