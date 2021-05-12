@@ -121,6 +121,7 @@ func (t *pastSearchController) goRequestHotSearch(startTime, endTime string) (ma
 	taskDate := make(chan string, 100)
 	taskJSON := make(chan string, 100)
 	wg.Add(len(dateList))
+	size := len(dateList)
 	for _, date := range dateList {
 		date := date
 		// 爬取某个日期的热搜数据
@@ -130,6 +131,8 @@ func (t *pastSearchController) goRequestHotSearch(startTime, endTime string) (ma
 			urlValues.Add("date", date)
 			jsonStr, err := network.GetRequest(PAST_SEARCH_URL, urlValues, header)
 			if err != nil {
+				size--
+				log.GetLog().Error.Println(fmt.Sprintf("date: %s 请求历史热搜错误！", date))
 				return
 			}
 			mutex.Lock()
@@ -140,7 +143,7 @@ func (t *pastSearchController) goRequestHotSearch(startTime, endTime string) (ma
 			mutex.Unlock()
 		}()
 	}
-	for range dateList {
+	for i := 0; i < size; i++ {
 		jsonMap[<-taskDate] = <-taskJSON
 	}
 	close(taskDate)
