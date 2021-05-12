@@ -20,7 +20,7 @@ var options = cookiejar.Options{
 var jar, _ = cookiejar.New(&options)
 
 var Client = &http.Client{
-	Timeout: 15 * time.Second,
+	Timeout: 20 * time.Second,
 	Transport: &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	},
