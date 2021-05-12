@@ -26,7 +26,7 @@ const (
 var pastSearch *pastSearchController
 var wg sync.WaitGroup
 var mutex sync.Mutex
-var flag bool	//微博内容的html解析失败后，再次递归请求的标志符，防止无限递归
+//var flag bool	//微博内容的html解析失败后，再次递归请求的标志符，防止无限递归
 
 func GetPastSearchInstance() *pastSearchController {
 	if pastSearch == nil {
@@ -118,8 +118,8 @@ func (t *pastSearchController) goRequestHotSearch(startTime, endTime string) (ma
 	header := make(map[string]string)
 	header["Origin"] = "http://weibo.zhaoyizhe.com"
 	debug.SetMaxThreads(1000)
-	taskDate := make(chan string, 50)
-	taskJSON := make(chan string, 50)
+	taskDate := make(chan string, 100)
+	taskJSON := make(chan string, 100)
 	wg.Add(len(dateList))
 	for _, date := range dateList {
 		date := date
@@ -165,7 +165,7 @@ func (t *pastSearchController) goFilterSearch(jsonMap map[string]string) ([]enti
 			log.GetLog().Error.Println(fmt.Sprintf("date: %s 出现json数据错误！", date))
 			continue
 		}
-		flag = true
+		//flag = true
 		list := t.goFilterSearchMain(date, jsonDec.Data)
 		log.GetLog().Info.Println(fmt.Sprintf("开始插入date=%s 的热搜数据;", date))
 		err = dao.GetPastDao().InsertAllPastHotSearch(list)
@@ -180,8 +180,8 @@ func (t *pastSearchController) goFilterSearch(jsonMap map[string]string) ([]enti
 func (t *pastSearchController) goFilterSearchMain(dateStr string, datas []entity.HotSearchData) []entity.HotSearchEntity {
 	var hotSearchList []entity.HotSearchEntity
 	var errorSearchList []entity.HotSearchData
-	taskHTML := make(chan string, 50)
-	taskData := make(chan entity.HotSearchData, 50)
+	taskHTML := make(chan string, 350)
+	taskData := make(chan entity.HotSearchData, 350)
 	wg.Add(len(datas))
 	for _, hotSearchData := range datas {
 		hotSearchData := hotSearchData
@@ -212,7 +212,7 @@ func (t *pastSearchController) goFilterSearchMain(dateStr string, datas []entity
 		h := <-taskHTML
 		text, err := network.PastHotSearchTextHTMLParse(h)
 		if err != nil {
-			if flag && strings.Contains(h, "正在检测访问环境") {
+			if strings.Contains(h, "正在检测访问环境") {
 				parseErrorTimes++
 			}
 			if hotSearchData.ReqNumber < entity.REQ_NUMBER_LIMIT {
@@ -220,12 +220,11 @@ func (t *pastSearchController) goFilterSearchMain(dateStr string, datas []entity
 				errorSearchList = append(errorSearchList, hotSearchData)
 			} else {
 				// 检查html解析失败的原因是否是微博在进行安全检测
-				if !flag {
-					log.GetLog().Error.Println(
-						fmt.Sprintf(
-							"date=%s，topic=%s，连续%d次都无法解析出该热搜的正文内容，以下是它的html内容\n%s\n",
-							dateStr, hotSearchData.Topic, entity.REQ_NUMBER_LIMIT+1, h))
-				}
+				log.GetLog().Error.Println(
+					fmt.Sprintf(
+						"date=%s，topic=%s，连续%d次都无法解析出该热搜的正文内容，以下是它的html内容\n%s\n",
+						dateStr, hotSearchData.Topic, entity.REQ_NUMBER_LIMIT+1, h))
+
 			}
 			continue
 		}
@@ -242,14 +241,17 @@ func (t *pastSearchController) goFilterSearchMain(dateStr string, datas []entity
 	close(taskData)
 	wg.Wait()
 	// 如果html解析失败的原因是微博进行安全检测的话，那等待5分钟后再请求
-	if parseErrorTimes > 5 || parseErrorTimes == len(datas){
-		flag = false
-		log.GetLog().Error.Println(fmt.Sprintf("date=%s，html解析失败的原因是微博进行安全检测，此时等待5分钟后再次请求", dateStr))
-		time.Sleep(5 * time.Minute)
-		return t.goFilterSearchMain(dateStr, datas)
-	}
+	//if parseErrorTimes > 5 || parseErrorTimes == len(datas){
+	//	flag = false
+	//	log.GetLog().Error.Println(fmt.Sprintf("date=%s，html解析失败的原因是微博进行安全检测，此时等待5分钟后再次请求", dateStr))
+	//	time.Sleep(5 * time.Minute)
+	//	return t.goFilterSearchMain(dateStr, datas)
+	//}
 	sleepTime := time.Nanosecond
 	switch {
+	case parseErrorTimes > 5:
+		log.GetLog().Error.Println(fmt.Sprintf("date=%s，html解析失败的原因是微博进行安全检测，此时等待5分钟后再次请求", dateStr))
+		sleepTime = 5
 	case len(datas) < 10:
 		sleepTime = 1
 	case len(datas) < 60:
