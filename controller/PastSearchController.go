@@ -66,7 +66,7 @@ func (t *pastSearchController) getPastSearchDB(w http.ResponseWriter, r *http.Re
 		network.ErrorShow(w, err)
 	} else {
 		sort.Sort(entity.HotSearchList(hotSearchList))
-		network.ResultOK(w, 0, "输入时间段的热搜时间查询成功！", hotSearchList)
+		network.ResultOK(w, 0, "输入时间段的热搜数据查询成功！", hotSearchList)
 	}
 }
 
@@ -91,7 +91,7 @@ func (t *pastSearchController) pastSearchCrawler(w http.ResponseWriter, r *http.
 	//	return
 	//}
 	elapsed := time.Since(t1)
-	message := fmt.Sprintf("指定日期的新冠肺炎相关热搜成功存入数据库！耗时 %.2fs", float64(elapsed)/1e9)
+	message := fmt.Sprintf("指定日期的新冠疫情相关热搜成功存入数据库！耗时 %.2fs", float64(elapsed)/1e9)
 	network.ResultOK(w, 0, message, hotSearchList)
 }
 
@@ -245,13 +245,7 @@ func (t *pastSearchController) goFilterSearchMain(dateStr string, datas []entity
 	close(taskHTML)
 	close(taskData)
 	wg.Wait()
-	// 如果html解析失败的原因是微博进行安全检测的话，那等待5分钟后再请求
-	//if parseErrorTimes > 5 || parseErrorTimes == len(datas){
-	//	flag = false
-	//	log.GetLog().Error.Println(fmt.Sprintf("date=%s，html解析失败的原因是微博进行安全检测，此时等待5分钟后再次请求", dateStr))
-	//	time.Sleep(5 * time.Minute)
-	//	return t.goFilterSearchMain(dateStr, datas)
-	//}
+
 	sleepTime := time.Nanosecond
 	switch {
 	case parseErrorTimes > 5:

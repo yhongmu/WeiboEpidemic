@@ -13,6 +13,7 @@ func main() {
 	dao.InitDB()
 	//dao.CreateTodaySearchTable()
 	dao.CreatePastSearchTable()
+	//utils.CreateExcelTable()
 	server := http.Server{
 		Addr: ":8090",
 		Handler: network.GetRouterInstance(),
@@ -22,6 +23,8 @@ func main() {
 	controller.GetTodaySearchInstance().Router(network.GetRouterInstance())
 	//注册历史微博新冠疫情热搜API路由
 	controller.GetPastSearchInstance().Router(network.GetRouterInstance())
+	//注册报表下载的API路由
+	controller.GetDownloadInstance().Router(network.GetRouterInstance())
 
 	err := server.ListenAndServe()
 	if err != nil {
